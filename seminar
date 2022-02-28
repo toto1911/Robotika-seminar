@@ -1,0 +1,70 @@
+#include <Servo.h>
+#include <LiquidCrystal.h>
+
+Servo motor; //servo varijabla imena robotNeck
+
+LiquidCrystal lcd(1, 2, 4, 5, 6, 7); // Stvara LCD objekt s parametrima: (rs, enable, d4, d5, d6, d7)
+
+										//dodijeljuje brojeve PIN-ovima
+
+const int sigPin = 13;
+
+int distanceCm;
+long timeVal;
+
+void setup() {
+  motor.attach(3); //Servo je povezan na arduino pin ~3
+  
+  lcd.begin(16, 2); //Inicijalizacija veličine LCD displaya
+  
+  lcd.setCursor(3,0);
+  lcd.print("Dobrodosli");
+  delay(1000);
+  lcd.clear();
+  lcd.setCursor(2,0);
+  lcd.print("Pokretanje...");
+  delay(1500);
+  lcd.clear();
+
+}
+
+void loop() {
+ 
+    distanceCm = distCalc();
+  
+      motor.write(distanceCm/2);
+ 	   delay(1); 
+    
+    //Prikaz na displayu
+    lcd.setCursor(0,0); // Postavlja mjesto na kojem će se prikazivati sljedeći tekst napisan na LCD-u
+    lcd.print("Udaljenost:"); // Ispisuje riječ Udaljenost na LCD-u
+    lcd.print(distanceCm); // Ispisuje vrijednost udaljenosti od senzora
+    lcd.print("cm"); // Ispisuje mjernu jedinicu
+    delay(10); //vrijeme čekanja (10ms)
+  		
+  }  
+//Funckija koja računa udaljenost
+int distCalc(){
+  pinMode(sigPin, OUTPUT); //Konfigurira specificirani pin da se ponaša kao izlaz, u ovom slučaju sigPIN.
+  
+  digitalWrite(sigPin, LOW); //Isključuje sigPin
+  delayMicroseconds(2);
+  
+  digitalWrite(sigPin, HIGH); //Uključuje sigPin
+  delayMicroseconds(10);
+  digitalWrite(sigPin, LOW); //Isključuje sigPin
+
+ 	// Isti se pin koristi za čitanje signala iz PING-a
+  	// čije je trajanje vrijeme (u mikrosekundama) od slanja ping-a
+  	// do prijema njegovog odjeka od objekta
+  
+  pinMode(sigPin, INPUT); ////Konfigurira specificirani pin da se ponaša kao ulaz, u ovom slučaju sigPIN.
+  timeVal = pulseIn(sigPin, HIGH); //Funkcija pulseIn za sigPin prima vrijednost HIGH odnosno kad je sigPin uključen.
+  									//Inače čeka da pređe iz stanja isključeno u uključeno odnosno iz LOW u HIGH
+  									//Radi u vremenskom ograničenju od 10ms do 3min
+  
+  //Pretvaranje vremena u udaljenost
+  distanceCm = timeVal / 29 / 2;
+  
+  return distanceCm;
+}
